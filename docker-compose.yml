@@ -1,0 +1,7 @@
+services:
+  llm-mock:
+    build: ./mock-llm
+    ports:
+      - "9001:9000"
+    environment:
+      - PORT=9000
