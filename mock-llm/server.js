@@ -19,7 +19,7 @@ const NORMAL_RESPONSE = {
     "최근 대전에서 상대 대비 다소 공격적인 플레이 스타일을 보이고 있습니다. 전반적인 TR 흐름은 상승세입니다.",
   highlights: [
     { stat: "delta_plonk", sentence: "상대 대비 Plonk 성향이 뚜렷하게 강한 편입니다." },
-    { stat: "clutch", sentence: "2판 이상 뒤진 상황에서의 역전승 비율이 평균보다 높습니다." },
+    { stat: "comeback_rate", sentence: "2판 이상 뒤진 상황에서의 역전승 비율이 평균보다 높습니다." },
     { stat: "tr_trend_delta", sentence: "최근 10판 기준 TR이 이전 대비 상승하는 흐름을 보이고 있습니다." },
   ],
 };
