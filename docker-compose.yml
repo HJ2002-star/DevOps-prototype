@@ -1,7 +1,21 @@
 services:
-  llm-mock:
+  llm-mock-1:
     build: ./mock-llm
     ports:
       - "9001:9000"
+    environment:
+      - PORT=9000
+
+  llm-mock-2:
+    build: ./mock-llm
+    ports:
+      - "9002:9000"
+    environment:
+      - PORT=9000
+
+  tetrio-mock:
+    build: ./tetrio-mock
+    ports:
+      - "9003:9000"
     environment:
       - PORT=9000
