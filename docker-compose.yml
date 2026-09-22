@@ -1,21 +1,26 @@
+# [2026-09-22 갱신] 호스트 노출 포트를 환경변수로 조정 가능하게 변경.
+# 기존에는 9001/9002/9003이 아래처럼 하드코딩되어 있어서, 다른 프로젝트와 포트가
+# 겹치면 이 파일을 직접 고쳐야 했음. 지금은 LLM_MOCK_1_PORT / LLM_MOCK_2_PORT /
+# TETRIO_MOCK_PORT 환경변수로 재정의 가능 (안 주면 기존과 동일한 기본값 사용).
+# 예: LLM_MOCK_1_PORT=9101 docker compose up -d
 services:
   llm-mock-1:
     build: ./mock-llm
     ports:
-      - "9001:9000"
+      - "${LLM_MOCK_1_PORT:-9001}:9000"
     environment:
       - PORT=9000
 
   llm-mock-2:
     build: ./mock-llm
     ports:
-      - "9002:9000"
+      - "${LLM_MOCK_2_PORT:-9002}:9000"
     environment:
       - PORT=9000
 
   tetrio-mock:
     build: ./tetrio-mock
     ports:
-      - "9003:9000"
+      - "${TETRIO_MOCK_PORT:-9003}:9000"
     environment:
       - PORT=9000

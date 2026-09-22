@@ -1,17 +1,21 @@
 # Finesse 개발환경 프로토타입
 
-Mock서버도입제안 / Mock개발환경-구축가이드 문서(2026-09-03)의 아이디어를 실제로
-확인해보기 위한 프로토타입입니다. 팀 논의 전 상태이므로, 채택 여부는 아직 회의 안건입니다.
+**상태: 팀 공식 채택 확정 (2026-09-10 회의) — [2026-09-22 갱신]** scope=heavy(tr_trend_delta
+챕터) 구현, 하이라이트 후보 풀에서 tr_trend_delta 제외, 포트 환경변수화(LLM_MOCK_1_PORT 등) 반영.
+
+Mock서버도입제안 / Mock개발환경-구축가이드 문서(2026-09-03)의 아이디어에서 시작한 프로토타입입니다.
 
 ## 포함된 것
 
-- **LLM Mock 서버 2개 인스턴스** (`llm-mock-1`, `llm-mock-2`) — 기능명세서 3.4/3.5절 스키마 그대로 따름, scope=light만. 백엔드의 라운드로빈 분배 로직(FR-12)을 두 인스턴스 상대로 검증할 수 있음
+- **LLM Mock 서버 2개 인스턴스** (`llm-mock-1`, `llm-mock-2`) — 기능명세서 3.4/3.5절 스키마 그대로 따름. scope=light 전체 + **scope=heavy는 tr_trend_delta 챕터만 우선 구현**(적응형 N값 로직 포함). 백엔드의 라운드로빈 분배 로직(FR-12)을 두 인스턴스 상대로 검증할 수 있음
 - 정상 응답 + 데모용 예외 모드 4종 (지연 / 서버 오류 / 하이라이트 개수 오류 / **입력에 없는 지표는 하이라이트로 고르지 않음**)
 - **TETR.IO API Mock** (`tetrio-mock`) — 유저 조회 + 매치 히스토리(상대 스탯 포함) 고정 fixture. 표본 부족(콜드스타트) 케이스 포함
-- `docker compose up` 한 번으로 3개 서비스 전부 실행
+- `docker compose up` 한 번으로 3개 서비스 전부 실행. 호스트 포트는 환경변수(`LLM_MOCK_1_PORT`, `LLM_MOCK_2_PORT`, `TETRIO_MOCK_PORT`)로 재정의 가능
 
 ## 제외된 것 (회의에서 논의 필요)
 
+- scope=heavy의 나머지 7개 챕터(플레이스타일/공격효율/수비/상대강도별승률/역전승/컨디션변화/라이벌) — tr_trend_delta만 우선 구현됨
+- meta.retry_count — **이 저장소 범위 밖으로 정정.** "백엔드가 LLM/Mock 응답 형식 오류로 재요청한 횟수"를 세는 필드라, 백엔드 자신의 응답 스키마에 들어가야 함. mock-llm은 상태가 없는 스텁이라 재시도 여부를 알 수 없어 한때 넣었다가 (2026-09-22) 제거함
 - QA 예외 모드의 정식 스펙 (지금 있는 것은 데모용 임시 버전)
 - CI 파이프라인 연동
 - 실제 프론트엔드/백엔드/캐시(Redis) — 이건 원래 다른 역할(프론트·백엔드) 담당이라 이 저장소 범위 밖
@@ -20,13 +24,14 @@ Mock서버도입제안 / Mock개발환경-구축가이드 문서(2026-09-03)의 
 
 ```bash
 docker compose up --build -d
+# 포트를 바꾸고 싶다면 예: LLM_MOCK_1_PORT=9101 docker compose up --build -d
 ```
 
-| 서비스 | 포트 | 역할 |
-|---|---|---|
-| `llm-mock-1` | `localhost:9001` | LLM Mock (1번 서버) |
-| `llm-mock-2` | `localhost:9002` | LLM Mock (2번 서버, 라운드로빈 대상) |
-| `tetrio-mock` | `localhost:9003` | TETR.IO API Mock |
+| 서비스 | 포트 (기본값) | 포트 환경변수 | 역할 |
+|---|---|---|---|
+| `llm-mock-1` | `localhost:9001` | `LLM_MOCK_1_PORT` | LLM Mock (1번 서버) |
+| `llm-mock-2` | `localhost:9002` | `LLM_MOCK_2_PORT` | LLM Mock (2번 서버, 라운드로빈 대상) |
+| `tetrio-mock` | `localhost:9003` | `TETRIO_MOCK_PORT` | TETR.IO API Mock |
 
 ## 테스트 방법 — LLM Mock
 
@@ -52,6 +57,25 @@ curl "http://localhost:9001/api/v1/comment/testuser?scope=light&mode=delay"
 
 # 헬스체크
 curl "http://localhost:9001/health"
+```
+
+## 테스트 방법 — LLM Mock (scope=heavy, 신규)
+
+tr_trend_delta 챕터만 우선 구현되어 있습니다. `totalGames`로 유저의 전체 판수를 넘기면
+데이터 명세서 10절의 적응형 N값 표에 따라 N이 계단식으로 결정됩니다.
+
+```bash
+# 30~59판 구간 → N=15
+curl "http://localhost:9001/api/v1/comment/testuser?scope=heavy&totalGames=45"
+
+# 정확히 60판 (경계값) → 상위 구간 N=20 이 적용되는지 확인
+curl "http://localhost:9001/api/v1/comment/testuser?scope=heavy&totalGames=60"
+
+# 10판 미만 → 콜드스타트, tr_trend_delta 값 자체가 노출되지 않아야 함(exposed:false)
+curl "http://localhost:9001/api/v1/comment/testuser?scope=heavy&totalGames=8"
+
+# totalGames를 안 주면 기본값 60 사용 (tetrio-mock의 testuser 판수와 동일)
+curl "http://localhost:9001/api/v1/comment/testuser?scope=heavy"
 ```
 
 ## 테스트 방법 — TETR.IO Mock
