@@ -1,0 +1,28 @@
+{
+  "source": "Finesse-학교PC배정현황 v1.7 (2026-09-24) + 사용자 확인 (2026-09-28)",
+  "subnet": "192.168.0.0/24",
+  "gateway": "192.168.0.1",
+  "dns": ["134.75.217.2", "168.126.63.1"],
+  "ports": { "backend": 8080, "llm": 8081, "frontend": 5173 },
+
+  "backend": null,
+  "frontend": null,
+  "llmServers": ["301B-11", "301B-13"],
+  "backendAllow": ["301B-09", "301B-10", "301B-11", "301B-12", "301B-13", "301B-14", "301B-22", "301B-24", "301B-25", "301B-26", "301B-27", "301B-28"],
+  "extraLlmAllow": [],
+
+  "pcs": [
+    { "id": "301B-09", "hostname": null, "ip": "192.168.0.109", "role": "보조",          "owner": null,                  "ramGB": 16, "gpu": "GTX 1050 2GB" },
+    { "id": "301B-10", "hostname": null, "ip": "192.168.0.110", "role": "LLM 서버 보조", "owner": "윤세연(주)/조성빈(보조)", "ramGB": 32, "gpu": "GTX 1050 2GB" },
+    { "id": "301B-11", "hostname": null, "ip": "192.168.0.111", "role": "LLM 서버",      "owner": "윤세연",              "ramGB": 32, "gpu": "GTX 1050 2GB" },
+    { "id": "301B-12", "hostname": null, "ip": "192.168.0.112", "role": "개인 개발",     "owner": "박덕현",              "ramGB": 16, "gpu": "GTX 1050 2GB" },
+    { "id": "301B-13", "hostname": null, "ip": "192.168.0.113", "role": "LLM 서버",      "owner": "윤세연",              "ramGB": 16, "gpu": "GTX 1050 2GB" },
+    { "id": "301B-14", "hostname": null, "ip": "192.168.0.114", "role": "LLM 서버",      "owner": "윤세연",              "ramGB": 16, "gpu": "GTX 1050 2GB" },
+    { "id": "301B-22", "hostname": null, "ip": "192.168.0.122", "role": "보조",          "owner": null,                  "ramGB": 16, "gpu": "GTX 1050 2GB" },
+    { "id": "301B-24", "hostname": null, "ip": "192.168.0.124", "role": "보조",          "owner": "박덕현",              "ramGB": 32, "gpu": "GTX 1050 2GB" },
+    { "id": "301B-25", "hostname": null, "ip": "192.168.0.125", "role": "개인 개발",     "owner": "윤세연",              "ramGB": 16, "gpu": "GTX 1050 2GB" },
+    { "id": "301B-26", "hostname": null, "ip": "192.168.0.126", "role": "개인 개발 (백엔드 후보)", "owner": "정한비",       "ramGB": 16, "gpu": "GTX 1050 2GB" },
+    { "id": "301B-27", "hostname": null, "ip": "192.168.0.127", "role": "개인 개발",     "owner": "위성훈",              "ramGB": 16, "gpu": "GTX 1050 2GB" },
+    { "id": "301B-28", "hostname": null, "ip": "192.168.0.128", "role": "개인 개발",     "owner": "호준수",              "ramGB": 16, "gpu": "GTX 1050 2GB" }
+  ]
+}

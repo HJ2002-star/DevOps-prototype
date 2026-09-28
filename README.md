@@ -112,3 +112,9 @@ cd tetrio-mock && PORT=9003 node server.js  # 또 다른 터미널
 외부 패키지 설치가 필요 없어서 (Node.js 내장 http 모듈만 사용) `npm install` 없이 바로 됩니다.
 
 
+
+## 학교 PC 간 통신 연결 (`finesse-pc-network/`)
+
+실제 학교 PC(192.168.0.0/24)에서 백엔드 ↔ llama-server(8081)를 연결하기 위한 PowerShell 5.1 스크립트와 문서.
+사람이 각 PC에서 관리자 PowerShell로 스크립트를 실행하는 방식이며, 순서는 [`finesse-pc-network/docs/실행가이드.md`](finesse-pc-network/docs/실행가이드.md)를 따른다.
+기준 데이터는 `finesse-pc-network/config/pcs.json` 하나다 (현재: LLM 서버 11·13, 백엔드 미정).
