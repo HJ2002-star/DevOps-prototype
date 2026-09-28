@@ -21,6 +21,34 @@ PC 정보의 출처는 「Finesse — 학교 PC 배정 현황」 **v1.6 (2026-09
 역할을 바꿀 때는 `pcs.csv`의 `Role` 칸만 고치면 된다. 모든 스크립트가 이 파일을 읽는다.
 (`LLM`, `LLM_STANDBY`, `BACKEND`, `FRONTEND`, `DEV`, `AUX`)
 
+## 0-1. 임시: 11 ↔ 13 튜닝 연동 (2026-09-28 추가)
+
+LLM 담당(윤세연)이 튜닝하면서 두 서버에 같은 요청을 보내 결과를 비교할 수 있도록, **301B-11과 301B-13만** 서로의
+llama-server(8081)를 호출할 수 있게 연다. 방식은 지시서 그대로(llama-server HTTP + 출발지 제한 방화벽)이고,
+포트포워딩·RPC·파일 공유는 쓰지 않는다. 14와 나머지 PC의 규칙은 바뀌지 않는다.
+
+`pcs.csv`의 `LlmClient` 칸에 `임시(튜닝)`이 적힌 PC끼리만 서로 허용된다 (지금은 11·13).
+
+```powershell
+# 11번, 13번 각각에서 (관리자 PowerShell)
+powershell -ExecutionPolicy Bypass -File .\02-apply-firewall.ps1 -AllowPing   # 'Finesse LLM' + 'Finesse LLM Client (임시)' 규칙 생성
+.\start-llama-server.ps1 -Model <gguf 경로>                                   # 0.0.0.0:8081
+
+# 확인 — 11번에서 13번으로, 13번에서 11번으로
+.\03-verify.ps1 -Target 301B-13     # 11번에서 실행
+.\03-verify.ps1 -Target 301B-11     # 13번에서 실행
+```
+
+튜닝할 때 상대 서버 호출 예시 (11번에서):
+
+```powershell
+$body = @{ prompt = '...'; n_predict = 128; temperature = 0.7 } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri http://192.168.0.113:8081/completion -Body $body -ContentType 'application/json; charset=utf-8'
+```
+
+**회수:** 튜닝이 끝나면 두 행의 `LlmClient` 칸을 비우고 11·13에서 `02-apply-firewall.ps1`을 다시 실행한다.
+(규칙 이름에 "(임시)"가 붙어 있어 `Get-NetFirewallRule -Group Finesse`로 남아 있는지 바로 보인다.)
+
 ## 1. 파일
 
 | 파일 | 어디서 | 단계 | 하는 일 |
@@ -86,7 +114,7 @@ Get-ChildItem .\results\precheck_*.csv | ForEach-Object { Import-Csv $_ -Encodin
 | 서비스 | 포트 | 받는 출발지 |
 |---|---|---|
 | 백엔드 (스프링 부트) | **8080** | 팀 PC 12대 |
-| LLM 서버 (llama-server) | **8081** | **백엔드 PC만** (llama-server에 인증이 없음) |
+| LLM 서버 (llama-server) | **8081** | **백엔드 PC만** (llama-server에 인증이 없음). 임시로 11↔13 추가 (0-1절) |
 | 프론트 (Vite) | **5173** | 팀 PC 12대 |
 
 ### ③ 검증 (백엔드 PC에서, 아래 단계부터 한 칸씩)
@@ -138,6 +166,10 @@ GTX 1050(2GB)이 아닌 GPU가 나오면 따로 표시하고 PM에게 알린다.
 # LLM PC (11·13·14) — 백엔드 PC만
 New-NetFirewallRule -DisplayName 'Finesse LLM' -Group 'Finesse' -Direction Inbound -Protocol TCP -LocalPort 8081 `
   -RemoteAddress 192.168.0.126 -Action Allow -Profile Any
+
+# 임시 튜닝 연동 — 11번에서는 13번만, 13번에서는 11번만 (0-1절)
+New-NetFirewallRule -DisplayName 'Finesse LLM Client (임시)' -Group 'Finesse' -Direction Inbound -Protocol TCP -LocalPort 8081 `
+  -RemoteAddress 192.168.0.113 -Action Allow -Profile Any    # 11번에서. 13번에서는 192.168.0.111
 
 # 백엔드 PC (26) — 팀 PC 12대
 New-NetFirewallRule -DisplayName 'Finesse Backend' -Group 'Finesse' -Direction Inbound -Protocol TCP -LocalPort 8080 `

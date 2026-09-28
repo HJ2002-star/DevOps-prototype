@@ -14,7 +14,7 @@
 
 .PARAMETER Stage           normal | after-reboot. after-reboot 면 "7 재부팅 후" 칸을 채운다.
 .PARAMETER IncludeStandby  LLM_STANDBY(301B-10)도 대상에 넣는다.
-.PARAMETER Target          특정 PC만 (예: -Target 301B-11,301B-13)
+.PARAMETER Target          특정 PC만 (예: -Target 301B-11,301B-13). 11↔13 튜닝 연동 확인은 11에서 -Target 301B-13, 13에서 -Target 301B-11
 .PARAMETER TimeoutSec      추론 요청 타임아웃(초). GTX 1050 첫 요청은 느릴 수 있다.
 
 .EXAMPLE
@@ -41,8 +41,8 @@ if ($Target) { $llms = @($pcs | Where-Object { $Target -contains $_.PC }) }
 if ($llms.Count -eq 0) { throw '검증할 LLM PC가 없습니다. pcs.csv의 Role 을 확인하세요.' }
 
 $me = $null; try { $me = Resolve-SelfPc -Pcs $pcs } catch { }
-if ($me -and $me.Role -ne 'BACKEND') {
-    Write-Host "⚠ 이 PC($($me.PC))는 BACKEND가 아닙니다. LLM 방화벽은 백엔드 IP만 허용하므로 2단계부터 실패하는 게 정상입니다." -ForegroundColor Yellow
+if ($me -and $me.Role -ne 'BACKEND' -and -not $me.LlmClient) {
+    Write-Host "⚠ 이 PC($($me.PC))는 BACKEND도 LlmClient도 아닙니다. LLM 방화벽이 막으므로 2단계부터 실패하는 게 정상입니다." -ForegroundColor Yellow
 }
 
 function Test-Tcp([string]$Ip, [int]$Port, [int]$TimeoutMs = 3000) {

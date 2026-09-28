@@ -6,6 +6,8 @@
 .DESCRIPTION
   pcs.csv에서 "이 PC"의 역할(Role)을 찾아 해당하는 규칙만 만든다.
     LLM / LLM_STANDBY : TCP <Port>(8081) ← BACKEND PC만 허용
+                        + 이 PC의 LlmClient 칸이 채워져 있으면, LlmClient 칸이 채워진 다른 PC끼리도 서로 허용
+                        (예: 11·13에 "임시(튜닝)" → 11↔13만 연결, 14는 그대로. 칸을 비우고 재실행하면 회수된다)
     BACKEND           : TCP <Port>(8080) ← 대장의 팀 PC 전체 허용
     FRONTEND          : TCP <Port>(5173) ← 대장의 팀 PC 전체 허용
     DEV / AUX         : 규칙 없음 (기존 Finesse 규칙만 정리)
@@ -41,6 +43,8 @@ $pcs = Get-FinessePcs -Path $CsvPath
 $self = Resolve-SelfPc -Pcs $pcs -Name $Pc
 $teamIps = @($pcs | ForEach-Object { $_.IP })
 $backendIps = @($pcs | Where-Object { $_.Role -eq 'BACKEND' } | ForEach-Object { $_.IP })
+$llmClientIps = @()
+if ($self.LlmClient) { $llmClientIps = @($pcs | Where-Object { $_.LlmClient -and $_.PC -ne $self.PC } | ForEach-Object { $_.IP }) }
 
 Write-Host ("이 PC: {0} ({1}) · 역할 {2} · 포트 {3}" -f $self.PC, $self.IP, $self.Role, $self.Port) -ForegroundColor Cyan
 
@@ -50,6 +54,9 @@ switch ($self.Role) {
     { $_ -in 'LLM', 'LLM_STANDBY' } {
         if ($backendIps.Count -eq 0) { throw 'pcs.csv에 Role=BACKEND 행이 없습니다. 백엔드 PC를 먼저 정하세요.' }
         $rules += @{ Name = 'Finesse LLM'; Port = $self.Port; From = $backendIps }
+        if ($llmClientIps.Count -gt 0) {
+            $rules += @{ Name = 'Finesse LLM Client (임시)'; Port = $self.Port; From = $llmClientIps }
+        }
     }
     'BACKEND'  { $rules += @{ Name = 'Finesse Backend'; Port = $self.Port; From = $teamIps } }
     'FRONTEND' { $rules += @{ Name = 'Finesse Frontend'; Port = $self.Port; From = $teamIps } }
