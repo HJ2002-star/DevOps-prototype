@@ -12,6 +12,8 @@ Mock서버도입제안 / Mock개발환경-구축가이드 문서(2026-09-03)의 
 - **TETR.IO API Mock** (`tetrio-mock`) — 유저 조회 + 매치 히스토리(상대 스탯 포함) 고정 fixture. 표본 부족(콜드스타트) 케이스 포함
 - `docker compose up` 한 번으로 3개 서비스 전부 실행. 호스트 포트는 환경변수(`LLM_MOCK_1_PORT`, `LLM_MOCK_2_PORT`, `TETRIO_MOCK_PORT`)로 재정의 가능
 
+- **학교 PC 간 통신 연결** (`pc-network/`, 2026-09-28 추가) — PC 대장, 사전 조사·방화벽 재적용·검증 PowerShell 스크립트. [pc-network/README.md](pc-network/README.md) 참고
+
 ## 제외된 것 (회의에서 논의 필요)
 
 - scope=heavy의 나머지 7개 챕터(플레이스타일/공격효율/수비/상대강도별승률/역전승/컨디션변화/라이벌) — tr_trend_delta만 우선 구현됨
