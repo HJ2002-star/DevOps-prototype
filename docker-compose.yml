@@ -24,3 +24,11 @@ services:
       - "${TETRIO_MOCK_PORT:-9003}:9000"
     environment:
       - PORT=9000
+
+  # [2026-09-29 추가] LLM/AI 담당 전용 — 파인튜닝 완료 전까지만 쓰는 임시 도구.
+  # 상시 서버가 아니라 1회성 스크립트라 profiles로 분리해 기본 docker compose up에서는 제외.
+  # 실행: docker compose --profile llm-payload run --rm llm-payload-mock <username> [--scope=heavy] [--totalGames=N]
+  llm-payload-mock:
+    build: ./llm-payload-mock
+    profiles: ["llm-payload"]
+    command: ["testuser"]

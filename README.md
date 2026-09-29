@@ -2,6 +2,7 @@
 
 **상태: 팀 공식 채택 확정 (2026-09-10 회의) — [2026-09-22 갱신]** scope=heavy(tr_trend_delta
 챕터) 구현, 하이라이트 후보 풀에서 tr_trend_delta 제외, 포트 환경변수화(LLM_MOCK_1_PORT 등) 반영.
+**[2026-09-29 갱신]** LLM/AI 담당용 `llm-payload-mock` 신규 추가 (더미 LLM 입력 payload 생성 스크립트, 임시).
 
 Mock서버도입제안 / Mock개발환경-구축가이드 문서(2026-09-03)의 아이디어에서 시작한 프로토타입입니다.
 
@@ -100,6 +101,36 @@ curl "http://localhost:9003/health"
 주의: 실제 TETR.IO 공식 API의 정확한 필드명/경로는 아직 대조 확인 전입니다(백엔드 API 명세서
 10절 미정 사항). 이 Mock의 응답 형태는 백엔드가 파싱 로직을 미리 연습할 수 있는 수준의
 근사치이며, 실제 API 스펙이 확정되면 함께 갱신해야 합니다.
+
+## LLM Payload Mock (LLM/AI 담당 전용, 임시)
+
+위 두 Mock과는 방향이 반대입니다 — mock-llm은 LLM이 "낼 법한 출력"을 흉내내고, 이건 LLM이
+"받을 입력(payload)"을 흉내냅니다. 백엔드 계산 파이프라인이 없어도 실제 Qwen 모델에 넣어볼
+입력값을 형식만 맞춰 뽑을 수 있습니다. **파인튜닝 완료 전까지만 쓰는 임시 도구이며, 상시
+서버가 아니라 1회성 스크립트입니다** — `docker compose up`만으로는 뜨지 않고 profile을
+명시해야 실행됩니다.
+
+```bash
+# light — 하이라이트 최대 3개, tr_trend_delta 제외
+docker compose --profile llm-payload run --rm llm-payload-mock testuser
+
+# heavy — eligible 전체 노출 (캡 없음), tr_trend_delta 포함
+docker compose --profile llm-payload run --rm llm-payload-mock testuser --scope=heavy --totalGames=45
+
+# 콜드스타트 (10판 미만) — payload 자체가 없음
+docker compose --profile llm-payload run --rm llm-payload-mock testuser --totalGames=8
+
+# Docker 없이 바로
+cd llm-payload-mock && node generate-dummy-payload.js testuser --scope=heavy
+```
+
+같은 유저명이면 항상 같은 결과가 나옵니다(결정론적 난수). 응답 형식은 TETR.IO 분석 데이터
+파이프라인 모듈 설계서 v1.4의 17~18절(`styleSignals` + `highlightCandidates`,
+`summaryHint` enum 7종)을 그대로 따릅니다 — 원시 delta 수치나 percentile은 같은 문서
+17.3절에서 LLM Payload에 넣는 것 자체가 금지되어 있어 만들지 않습니다.
+
+알려진 단순화 사항(eligible 판정이 실제 계산이 아닌 확률 랜덤인 점, `--totalGames` 입력
+미검증 등)은 팀 공유 문서 "Finesse-MockLLM-통합안내" 13장에 전부 기록되어 있습니다.
 
 ## Docker 없이 바로 테스트하고 싶다면
 
