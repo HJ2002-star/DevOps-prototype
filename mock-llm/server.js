@@ -22,7 +22,7 @@
 // 그 안에서만 하이라이트를 고른다. 안 주면 기존 기본값을 그대로 씀.
 // [2026-09-22] tr_trend_delta는 라이트 뷰 하이라이트 후보 풀에서 제외 확정
 // (데이터 명세서 10절) — 기본값에서 빠지고 session_vs_slope로 대체.
-// 예 — comeback_rate가 0회라 후보에서 빠진 유저를 흉내내기:
+// 예 — delta_comeback이 표본 부족(분모 0)으로 null이라 후보에서 빠진 유저를 흉내내기:
 //   curl "http://localhost:9000/api/v1/comment/testuser?scope=light&stats=delta_plonk,strength_split,session_vs_slope"
 
 const http = require("http");
@@ -43,13 +43,19 @@ const SENTENCES = {
   delta_vs_apm: "상대 대비 수비 지표(VS/APM)가 안정적입니다.",
   delta_cheese_index: "상대 대비 가비지 처리 패턴이 특징적입니다.",
   strength_split: "본인보다 강한 상대와의 승률이 눈에 띄게 낮습니다.",
-  comeback_rate: "2판 이상 뒤진 상황에서의 역전승 비율이 평균보다 높습니다.",
+  // [2026-10-01 정정] comeback_rate → delta_comeback. "하이라이트 지표 설계" 문서
+  // 2026-09-30 결정(9절)으로 라이트 뷰 하이라이트 후보 키가 교체됨
+  // (delta_comeback = comeback_rate − comeback_rate_against). 문장도 절대값 서술
+  // ("비율이 평균보다 높습니다")에서 경향성 서술로 바꿈 — light는 델타값 하나만
+  // 받으므로 "몇 판 중 몇 번" 식 구체적 수치는 지어내지 않는다(같은 문서 규칙 8).
+  delta_comeback: "상대 대비 불리한 상황을 뒤집는 경향이, 유리한 상황에서 뒤집히는 경향보다 강한 편입니다.",
   session_vs_slope: "경기가 진행될수록 컨디션이 상승하는 경향이 있습니다.",
 };
 
 // stats 파라미터가 없을 때 쓰는 기존 기본값.
 // [2026-09-22] tr_trend_delta 제외 확정에 따라 session_vs_slope로 교체.
-const DEFAULT_STATS = ["delta_plonk", "comeback_rate", "session_vs_slope"];
+// [2026-10-01] comeback_rate → delta_comeback (위 SENTENCES 주석 참고).
+const DEFAULT_STATS = ["delta_plonk", "delta_comeback", "session_vs_slope"];
 
 function sentenceFor(stat) {
   return SENTENCES[stat] || `${stat} 관련 특징이 관찰됩니다.`;

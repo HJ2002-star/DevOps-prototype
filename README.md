@@ -41,7 +41,7 @@ docker compose up --build -d
 curl "http://localhost:9001/api/v1/comment/testuser?scope=light"
 curl "http://localhost:9002/api/v1/comment/testuser?scope=light"
 
-# 입력에 있는 지표만 하이라이트로 고르기 (comeback_rate가 후보에서 빠진 유저 흉내내기)
+# 입력에 있는 지표만 하이라이트로 고르기 (delta_comeback이 후보에서 빠진 유저 흉내내기)
 curl "http://localhost:9001/api/v1/comment/testuser?scope=light&stats=delta_plonk,strength_split,session_vs_slope"
 
 # 하이라이트 4개 반환 (형식 오류 시뮬레이션 - 백엔드가 앞 3개만 쓰는지 확인용)
