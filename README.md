@@ -111,10 +111,11 @@ curl "http://localhost:9003/health"
 명시해야 실행됩니다.
 
 ```bash
-# light — 하이라이트 최대 3개, tr_trend_delta 제외
+# light — delta_metrics 11개 필드(playstyle 4 + attack 2 + defense 2 + strength_split
+# + delta_comeback + session_vs_slope)
 docker compose --profile llm-payload run --rm llm-payload-mock testuser
 
-# heavy — eligible 전체 노출 (캡 없음), tr_trend_delta 포함
+# heavy — 위 11개 + tr_trend_delta 추가 (라이트 11개 후보에서는 제외되는 heavy 전용 값)
 docker compose --profile llm-payload run --rm llm-payload-mock testuser --scope=heavy --totalGames=45
 
 # 콜드스타트 (10판 미만) — payload 자체가 없음
@@ -124,13 +125,17 @@ docker compose --profile llm-payload run --rm llm-payload-mock testuser --totalG
 cd llm-payload-mock && node generate-dummy-payload.js testuser --scope=heavy
 ```
 
-같은 유저명이면 항상 같은 결과가 나옵니다(결정론적 난수). 응답 형식은 TETR.IO 분석 데이터
-파이프라인 모듈 설계서 v1.4의 17~18절(`styleSignals` + `highlightCandidates`,
-`summaryHint` enum 7종)을 그대로 따릅니다 — 원시 delta 수치나 percentile은 같은 문서
-17.3절에서 LLM Payload에 넣는 것 자체가 금지되어 있어 만들지 않습니다.
+같은 유저명이면 항상 같은 결과가 나옵니다(결정론적 난수). 요청 형식은 "Finesse — 하이라이트
+지표 설계" 문서(2026-09-30 작성, **PM 검수 대기 — 아직 최종 확정 아님**) 2~3절의 11개 후보 ·
+`fixed_metrics`/`delta_metrics` 스키마를 그대로 따릅니다. **[2026-10-01 정정]** 이전 버전은
+"TETR.IO 분석 데이터 파이프라인 모듈 설계서 v1.4" 17~18절 기준 9종 categorical
+(`styleSignals`/`highlightCandidates`/`summaryHint` enum) 구조였는데, 그 근거 자체가 다른
+정본 문서들과 맞지 않는 것으로 확인되어 폐기했습니다. 지금은 raw delta 값을 그대로
+LLM에 보냅니다(구버전의 "원시 delta 금지" 규칙은 새 문서에서 사라짐).
 
-알려진 단순화 사항(eligible 판정이 실제 계산이 아닌 확률 랜덤인 점, `--totalGames` 입력
-미검증 등)은 팀 공유 문서 "Finesse-MockLLM-통합안내" 13장에 전부 기록되어 있습니다.
+알려진 단순화 사항(표본 부족 게이팅이 실제로는 2단계인데 이 스크립트는 1단계만 흉내냄,
+null 확률이 실제 계산이 아닌 임의 확률인 점, `--totalGames` 입력 미검증 등)은 팀 공유 문서
+"Finesse-MockLLM-통합안내" 13장에 전부 기록되어 있습니다(갱신 예정).
 
 ## Docker 없이 바로 테스트하고 싶다면
 
